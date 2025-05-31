@@ -1,0 +1,217 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tournament Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #e9f0f7, #d1e2f0);
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .navbar {
+      background-color: #0b2a55;
+    }
+
+    .navbar-brand, .nav-link {
+      font-weight: 600;
+      color: #ffffff !important;
+    }
+
+    .form-container {
+      max-width: 700px;
+      margin: 80px auto;
+    }
+
+    .form-card {
+      background-color: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    h3, h5 {
+      font-weight: 600;
+      color: #0b2a55;
+    }
+
+    .btn-primary {
+      background-color: #0d6efd;
+      border: none;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background-color: #084298;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="{% url 'home' %}">🏆 Tournament Hub</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon text-light"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'home' %}">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="#">Register</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Form Section -->
+<div class="container form-container">
+  <div class="form-card">
+    <h3 class="mb-4 text-center">Tournament Registration</h3>
+
+    <form method="post" action="{% url 'tournament_register' %}">
+      {% csrf_token %}
+
+      <!-- Player Info -->
+      <div class="mb-3">
+        <label for="player_name" class="form-label">Player Name</label>
+        <input type="text" class="form-control" id="player_name" name="player_name" placeholder="Enter your full name" required>
+      </div>
+      <div class="mb-3">
+        <label for="phone_number" class="form-label">Phone Number</label>
+        <input type="text" class="form-control" id="phone_number" name="phone_number" placeholder="Enter your phone number" required>
+      </div>
+      <div class="mb-3">
+        <label for="player_email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="player_email" name="player_email" placeholder="Enter your email" required>
+      </div>
+
+      <!-- Category -->
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="category" id="singles" value="singles" required>
+          <label class="form-check-label" for="singles">Singles</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="category" id="beginner_doubles" value="beginner_doubles">
+          <label class="form-check-label" for="beginner_doubles">Beginner Doubles</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="category" id="intermediate_mens_doubles" value="intermediate_mens_doubles">
+          <label class="form-check-label" for="intermediate_mens_doubles">Intermediate Mens Doubles</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="category" id="intermediate_+_mens_doubles" value="intermediate_+_mens_doubles">
+          <label class="form-check-label" for="intermediate_+_mens_doubles">Intermediate+ Mens Doubles</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="category" id="womens_doubles" value="womens_doubles">
+          <label class="form-check-label" for="womens_doubles">Womens Doubles</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="category" id="mixed_doubles" value="mixed_doubles">
+          <label class="form-check-label" for="mixed_doubles">Mixed Doubles</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="category" id="triplets" value="triplets">
+          <label class="form-check-label" for="triplets">Triplets</label>
+        </div>
+
+        
+      <!-- Partner Info -->
+      <div id="partner_fields" style="display: none;">
+        <div id="partner1_section">
+          <h5 class="mt-3">Partner</h5>
+          <div class="mb-3">
+            <label for="partner1_name" class="form-label">Partner Name</label>
+            <input type="text" class="form-control" id="partner1_name" name="partner1_name" placeholder="Enter partner's name">
+          </div>
+          <div class="mb-3">
+            <label for="partner1_phone" class="form-label">Partner Phone Number</label>
+            <input type="text" class="form-control" id="partner1_phone" name="partner1_phone" placeholder="Enter partner's phone number">
+          </div>
+          <div class="mb-3">
+            <label for="partner1_email" class="form-label">Partner Email</label>
+            <input type="email" class="form-control" id="partner1_email" name="partner1_email" placeholder="Enter partner's email">
+          </div>
+        </div>
+
+        <div id="partner2_section" style="display: none;">
+          <h5 class="mt-3">Partner 2</h5>
+          <div class="mb-3">
+            <label for="partner2_name" class="form-label">Partner 2 Name</label>
+            <input type="text" class="form-control" id="partner2_name" name="partner2_name" placeholder="Enter second partner's name">
+          </div>
+          <div class="mb-3">
+            <label for="partner2_phone" class="form-label">Partner 2 Phone Number</label>
+            <input type="text" class="form-control" id="partner2_phone" name="partner2_phone" placeholder="Enter second partner's phone number">
+          </div>
+          <div class="mb-3">
+            <label for="partner2_email" class="form-label">Partner 2 Email</label>
+            <input type="email" class="form-control" id="partner2_email" name="partner2_email" placeholder="Enter second partner's email">
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit -->
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-primary btn-lg">Proceed to Payment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Partner Logic Script -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const partnerFields = document.getElementById('partner_fields');
+    const partner2Section = document.getElementById('partner2_section');
+    const categoryRadios = document.querySelectorAll('input[name="category"]');
+
+    function togglePartnerFields() {
+      const selected = document.querySelector('input[name="category"]:checked')?.value;
+      if (selected === 'singles') {
+        partnerFields.style.display = 'none';
+      } else if (selected === 'triplets') {
+        partnerFields.style.display = 'block';
+        partner2Section.style.display = 'block';
+      } else {
+        partnerFields.style.display = 'block';
+        partner2Section.style.display = 'none';
+      }
+    }
+
+    togglePartnerFields();
+    categoryRadios.forEach(radio => {
+      radio.addEventListener('change', togglePartnerFields);
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Response</title>
+    <script>
+        // Redirect after 2 seconds (2000 milliseconds)
+        setTimeout(function() {
+            window.location.href = "{% url 'tournament_register' %}";
+        }, 2000);
+    </script>
+</head>
+<body>
+    <h2>Payment Result</h2>
+
+    {% if checksum_is_valid %}
+        Successful
+    {% else %}
+        Failed
+    {% endif %}
+
+    <p>You will be redirected shortly...</p>
+</body>
+</html>
