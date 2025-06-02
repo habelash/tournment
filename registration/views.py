@@ -42,3 +42,6 @@ def register_tournament(request):
     
 def home(request):
     return render(request, "home.html")
+
+def return_policies(request):
+    return render(request, 'policies.html')
