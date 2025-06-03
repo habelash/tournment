@@ -68,7 +68,7 @@ def initiate_payment(request,registration_id):
         category = registration.category
         if category == 'singles':
             amount = 59900
-        if category == 'triplets':
+        elif category == 'triplets':
             amount = 99900
         else :
             amount == 79900
