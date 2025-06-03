@@ -113,10 +113,10 @@ def payment_success(request):
             category = registration.category
             if category == 'singles':
                 amount = 59900
-            if category == 'triplets':
-                amount = 79900
-            else :
+            elif category == 'triplets':
                 amount = 99900
+            else :
+                amount == 79900
             if registration:
         # Save the payment details
                 Payment.objects.create(
