@@ -69,9 +69,9 @@ def initiate_payment(request,registration_id):
         if category == 'singles':
             amount = 59900
         if category == 'triplets':
-            amount = 79900
+            amount = 99900
         else :
-            amount == 99900
+            amount == 79900
         
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
