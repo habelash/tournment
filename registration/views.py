@@ -13,11 +13,11 @@ def register_tournament(request):
         phone_number = request.POST.get("phone_number")
         player_email = request.POST.get("player_email")
         partner_name = request.POST.get("partner1_name")
-        partner_phone_number = request.POST.get("partner1_number")
-        partner_email = request.POST.get("player1_email")
+        partner_phone_number = request.POST.get("partner1_phone")
+        partner_email = request.POST.get("partner1_email")
         partner_2_name = request.POST.get("partner2_name")
-        partner_2_number = request.POST.get("partner2_number")
-        partner_2_email = request.POST.get("player2_email")
+        partner_2_number = request.POST.get("partner2_phone")
+        partner_2_email = request.POST.get("partner2_email")
         category = request.POST.get("category")
 
         # Save registration immediately
