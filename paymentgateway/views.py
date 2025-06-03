@@ -71,7 +71,7 @@ def initiate_payment(request,registration_id):
         elif category == 'triplets':
             amount = 99900
         else :
-            amount == 79900
+            amount = 79900
         
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
@@ -116,7 +116,8 @@ def payment_success(request):
             elif category == 'triplets':
                 amount = 99900
             else :
-                amount == 79900
+                amount = 79900
+
             if registration:
         # Save the payment details
                 Payment.objects.create(
