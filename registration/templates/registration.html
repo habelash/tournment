@@ -201,7 +201,8 @@
       </div>
       <div class="mb-3">
         <label for="phone_number" class="form-label">Phone Number</label>
-        <input type="text" class="form-control" id="phone_number" name="phone_number" placeholder="Enter your phone number" required>
+        <input type="text" class="form-control" id="phone_number" name="phone_number" placeholder="Enter your phone number" pattern="^\d{10}$" required>
+
       </div>
       <div class="mb-3">
         <label for="player_email" class="form-label">Email</label>
@@ -249,7 +250,7 @@
           </div>
           <div class="mb-3">
             <label for="partner1_phone" class="form-label">Partner Phone Number</label>
-            <input type="text" class="form-control" id="partner1_phone" name="partner1_phone" placeholder="Enter partner's phone number">
+            <input type="text" class="form-control" id="partner1_phone" name="partner1_phone" placeholder="Enter partner's phone number" pattern="^\d{10}$">
           </div>
           <div class="mb-3">
             <label for="partner1_email" class="form-label">Partner Email</label>
@@ -265,7 +266,7 @@
           </div>
           <div class="mb-3">
             <label for="partner2_phone" class="form-label">Partner 2 Phone Number</label>
-            <input type="text" class="form-control" id="partner2_phone" name="partner2_phone" placeholder="Enter second partner's phone number">
+            <input type="text" class="form-control" id="partner2_phone" name="partner2_phone" placeholder="Enter second partner's phone number" pattern="^\d{10}$">
           </div>
           <div class="mb-3">
             <label for="partner2_email" class="form-label">Partner 2 Email</label>
