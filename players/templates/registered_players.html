@@ -131,7 +131,7 @@
                 <td>{{ payment.registration.player_name }}</td>
                 <td>{{ payment.registration.partner_name }}</td>
                 <td>{{ payment.registration.partner_2_name }}</td>
-                <td>{{ payment.registration.category }}</td>
+                <td>{{ payment.registration.get_category_display }}</td>
                 <td>
                   {% if payment.registration.payment_status == "Paid" %}
                     <span class="badge bg-success">Success</span>

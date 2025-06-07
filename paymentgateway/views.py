@@ -181,11 +181,11 @@ def payment_success(request):
 
             # Determine amount
             if category == 'singles':
-                amount = 100
+                amount = 59900
             elif category == 'triplets':
-                amount = 79900
+                amount = 99900
             else:
-                amount = 99900  # fixed: assignment not comparison
+                amount = 79900 
 
             # Save payment info
             Payment.objects.create(
