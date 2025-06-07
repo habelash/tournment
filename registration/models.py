@@ -5,7 +5,7 @@ CATEGORY_CHOICES = [
     ('singles', 'Singles'),
     ('beginner_doubles', 'Beginner Doubles'),
     ('intermediate_mens_doubles', 'Intermediate Mens Doubles'),
-    ('intermediate_+_mens_doubles', 'Intermediate+ Mens Doubles'),
+    ('intermediate_+_mens_doubles', 'Advanced Mens Doubles'),
     ('womens_doubles', 'Womens Doubles'),
     ('mixed_doubles', 'Mixed Doubles'),
     ('triplets', 'Triplets'),
