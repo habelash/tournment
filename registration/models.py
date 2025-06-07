@@ -29,7 +29,7 @@ class TournamentRegistration(models.Model):
     payment_status = models.CharField(max_length=20, default='Pending')  # Payment status
 
     def __str__(self):
-        return f"{self.player_name} ({self.category})"
+        return f"{self.player_name} - {self.category} - {self.phone_number} - {self.player_email}"
 
 
 class Payment(models.Model):
