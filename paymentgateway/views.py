@@ -67,7 +67,7 @@ def initiate_payment(request,registration_id):
         registration = TournamentRegistration.objects.filter(id=registration_id).first()
         category = registration.category
         if category == 'singles':
-            amount = 59900
+            amount = 49900
         elif category == 'triplets':
             amount = 99900
         else :
@@ -112,7 +112,7 @@ def payment_success(request):
             registration = TournamentRegistration.objects.get(razorpay_order_id=data['razorpay_order_id'])
             category = registration.category
             if category == 'singles':
-                amount = 59900
+                amount = 49900
             elif category == 'triplets':
                 amount = 99900
             else :
@@ -151,7 +151,7 @@ def payment_success(request):
                 }
 
                 send_transaction_email(player_email, partner_email, partner_2_email, player_name, partner_name, partner_2_name, category, payment_params)
-                
+
 
             # ✅ Payment is successful and verified
             return render(request, 'payment_success.html')
@@ -181,7 +181,7 @@ def payment_success(request):
 
             # Determine amount
             if category == 'singles':
-                amount = 59900
+                amount = 49900
             elif category == 'triplets':
                 amount = 99900
             else:
