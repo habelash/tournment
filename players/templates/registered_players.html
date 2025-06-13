@@ -118,6 +118,7 @@
         <table class="table table-bordered table-striped table-hover align-middle">
           <thead>
             <tr>
+              <th>Sl. No</th>
               <th>Player</th>
               <th>Partner Name</th>
               <th>Partner 2 Name</th>
@@ -128,6 +129,7 @@
           <tbody>
             {% for payment in payments %}
               <tr>
+                <td>{{ forloop.counter }}</td>
                 <td>{{ payment.registration.player_name }}</td>
                 <td>{{ payment.registration.partner_name }}</td>
                 <td>{{ payment.registration.partner_2_name }}</td>
