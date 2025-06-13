@@ -79,7 +79,7 @@
 
 {% for category in category_list %}
   <div class="mb-5">
-    <h4 class="category-header">{{ category.grouper }}</h4>
+    <h4 class="category-header">{{ category.list.0.team.get_category_display }}</h4>
 
     {% regroup category.list by league as league_list %}
 
