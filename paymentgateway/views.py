@@ -152,7 +152,6 @@ def payment_success(request):
 
                 send_transaction_email(player_email, partner_email, partner_2_email, player_name, partner_name, partner_2_name, category, payment_params)
 
-
             # ✅ Payment is successful and verified
             return render(request, 'payment_success.html')
         except razorpay.errors.SignatureVerificationError:

@@ -1,11 +1,18 @@
 from django.shortcuts import render
 from registration.models import Payment
 from django.shortcuts import render
-from collections import defaultdict
 from registration.models import TournamentRegistration
+from .models import LeagueAssignment
 from django.http import HttpResponse
 from django.template.loader import get_template
 import pdfkit  # Or use WeasyPrint or xhtml2pdf
+import pandas as pd
+import string
+from collections import defaultdict
+import string
+
+import os
+from django.conf import settings
 # Create your views here.
 
 def registered_players(request):
@@ -65,4 +72,18 @@ def fixture_view(request):
         rounds.append(('Round 1', round1))
         bracket_data[category] = rounds
 
-    return render(request, 'fixtures_chat.html', {'bracket_data': bracket_data})
+    return render(request, 'matches.html', {'bracket_data': bracket_data})
+
+def fixtures(request):
+    registrations = TournamentRegistration.objects.all()
+    
+    file_path = os.path.join(settings.BASE_DIR, 'players/fixtures.csv')  # or 'static/fixtures.csv' if in static
+    registered_data = pd.read_csv(file_path) 
+    
+    print(registered_data)
+    return render(request, 'fixtures.html', {'registrations': registrations})
+
+
+def league(request):
+    teams = LeagueAssignment.objects.select_related('team').order_by('category', 'league', 'id')  # fallback sort
+    return render(request, 'league.html', {'teams': teams})
