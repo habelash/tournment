@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render,redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from registration.models import TournamentRegistration, Payment
@@ -11,9 +11,6 @@ import razorpay
 import hashlib
 import hmac
 import base64
-import random
-import time
-import json
 
 
 def generate_checksum(params: dict, merchant_key: str) -> str:
@@ -97,7 +94,7 @@ def initiate_payment(request,registration_id):
 
 
 @csrf_exempt
-def payment_success(request):
+def razorpay_payment_success(request):
     if request.method == "POST":
         data = request.POST
         client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
@@ -229,3 +226,76 @@ def payment_success(request):
 
     else:
         return render(request, 'payment_failed.html')
+    
+
+def payment_qr(request,registration_id):
+    registration = TournamentRegistration.objects.filter(id=registration_id).first()
+
+    category = registration.category
+    if category == 'singles':
+        amount = 499
+    elif category == 'triplets':
+        amount = 999
+    else :
+        amount = 799
+    
+
+    context = {
+        'registration': registration,
+        'category': category,
+        'amount': amount,
+    }
+
+    return render(request, 'payment_qr.html', context)
+
+def upload_screenshot(request, registration_id):
+    registration = get_object_or_404(TournamentRegistration, id=registration_id)
+
+    category = registration.category
+    if category == 'singles':
+        amount = 499
+    elif category == 'triplets':
+        amount = 999
+    else :
+        amount = 799
+
+    if request.method == 'POST' and request.FILES.get('screenshot'):
+
+        screenshot = request.FILES['screenshot']
+        registration.screenshot = screenshot  # Make sure your model has this field
+
+         # Save payment info
+        Payment.objects.create(
+            registration=registration,
+            order_id=registration.id,
+            txn_id=registration.id,
+            txn_amount=amount,
+            status="TXN_SUCCESS",
+            response_data=registration.screenshot.url,
+        )
+        
+        registration.payment_status = "Paid"
+        registration.save()
+
+        payment_params = {
+                "TXNAMOUNT": amount,
+                "STATUS": "Validating Payment Screenshot",
+                "screenshot" : screenshot
+            }
+
+         #Extract email & name details
+        player_name = registration.player_name
+        partner_name = registration.partner_name
+        partner_2_name = registration.partner_2_name
+        player_email = registration.player_email
+        partner_email = registration.partner_email
+        partner_2_email = registration.partner_2_email
+        category_display = registration.get_category_display()
+        send_transaction_email(
+                player_email, partner_email, partner_2_email,
+                player_name, partner_name, partner_2_name,
+                category_display, payment_params
+            )
+        return render(request,"payment_success.html")  # or wherever you want to redirect after upload
+    return render(request, 'upload_screenshot.html', {'registration': registration})
+
