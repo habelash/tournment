@@ -36,7 +36,7 @@ def register_tournament(request):
         )
 
         # Redirect to payment page passing registration id
-        return redirect('paymentgateway:initiate_payment', registration_id=registration.id)
+        return redirect('paymentgateway:payment_qr', registration_id=registration.id)
 
     return render(request, "registration.html")
     
