@@ -45,3 +45,7 @@ def home(request):
 
 def return_policies(request):
     return render(request, 'policies.html')
+
+
+def contact_us(request):
+    return render(request, 'contact_us.html')
