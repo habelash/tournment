@@ -1,10 +1,5 @@
 from django.shortcuts import render, redirect
-from .registrationform import TournamentRegistrationForm
 from .models import TournamentRegistration
-from paymentgateway.views import initiate_payment
-from paytmchecksum import PaytmChecksum
-from django.views.decorators.csrf import csrf_exempt 
-from django.shortcuts import get_object_or_404
 # Create your views here.
 
 def register_tournament(request):
@@ -36,7 +31,7 @@ def register_tournament(request):
         )
 
         # Redirect to payment page passing registration id
-        return redirect('paymentgateway:payment_qr', registration_id=registration.id)
+        return redirect('paymentgateway:phonepe_initiate', registration_id=registration.id)
 
     return render(request, "registration.html")
     

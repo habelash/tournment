@@ -1,33 +1,17 @@
-from django.shortcuts import render,redirect, get_object_or_404
+from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from registration.models import TournamentRegistration, Payment
-import requests
-from django.http import HttpResponse
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-from django.http import JsonResponse
-import razorpay
-import hashlib
-import hmac
-import base64
+from django.conf import settings
+import uuid
+from phonepe.sdk.pg.env import Env
+from phonepe.sdk.pg.payments.v2.standard_checkout_client import StandardCheckoutClient
+from phonepe.sdk.pg.payments.v2.models.request.standard_checkout_pay_request import StandardCheckoutPayRequest
+from django.urls import reverse
+from django.utils.http import urlencode
 
-
-def generate_checksum(params: dict, merchant_key: str) -> str:
-    params_string = create_param_string(params)
-    digest = hmac.new(merchant_key.encode(), params_string.encode(), hashlib.sha256).digest()
-    checksum = base64.b64encode(digest).decode()
-    return checksum
-
-def verify_checksum(params: dict, merchant_key: str, checksum: str) -> bool:
-    params = {k: v for k, v in params.items() if k != "CHECKSUMHASH"}
-    generated_checksum = generate_checksum(params, merchant_key)
-    return generated_checksum == checksum
-
-def create_param_string(params: dict) -> str:
-    keys = sorted(params.keys())
-    param_str = '|'.join(str(params[key]) for key in keys if params[key] is not None)
-    return param_str
 
 def send_transaction_email(player_email, partner_email, partner_2_email, player_name, partner_name, partner_2_name, category, paytm_params):
     subject = "Shuttle Up - Tournament Registration Confirmation"
@@ -57,245 +41,130 @@ def send_transaction_email(player_email, partner_email, partner_2_email, player_
     msg.attach_alternative(html_content, "text/html")
     msg.send()
 
+def get_amount_by_category(category):
+    return 49900 if category == 'singles' else 99900 if category == 'triplets' else 79900
 
-def initiate_payment(request,registration_id):
+def initiate_phonepe_payment(request, registration_id):
+    try:
+        registration = TournamentRegistration.objects.get(id=registration_id)
+    except TournamentRegistration.DoesNotExist:
+        return render(request, 'payment_failure.html', {'error': 'Registration not found'})
 
-        # Lookup your saved registration (you can parse ORDERID if needed)
-        registration = TournamentRegistration.objects.filter(id=registration_id).first()
-        category = registration.category
-        if category == 'singles':
-            amount = 49900
-        elif category == 'triplets':
-            amount = 99900
-        else :
-            amount = 79900
-        
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    amount = get_amount_by_category(registration.category)
+    merchant_order_id = f"TXN{registration.id}{uuid.uuid4().hex[:6]}"
+    registration.phonepay_order_id = merchant_order_id
+    registration.save()
 
-        # Sample data – replace with actual user and amount
-        order = client.order.create({
-            "amount": amount,
-            "currency": "INR",
-            "payment_capture": "1"
-        })
+    client = StandardCheckoutClient.get_instance(
+        client_id=settings.PHONEPE_CLIENT_ID,
+        client_secret=settings.PHONEPE_CLIENT_SECRET,
+        client_version=1,
+        env=Env.SANDBOX if settings.PHONEPE_ENV == 'SANDBOX' else Env.PRODUCTION
+    )
+    # Build the callback URL with merchantTransactionId as query param
+    callback_path = reverse("paymentgateway:phonepe_callback")
+    callback_url = request.build_absolute_uri(callback_path)
+    redirect_url = f"{callback_url}?{urlencode({'merchantTransactionId': merchant_order_id})}"
 
-         # ✅ Save the generated order ID
-        registration.razorpay_order_id = order['id']
-        registration.save()
+    pay_request = StandardCheckoutPayRequest.build_request(
+        merchant_order_id=merchant_order_id,
+        amount=amount,
+        redirect_url=redirect_url
+    )
 
-        context = {
-            'payment': order,
-            'razorpay_order_id': order['id'],
-            'razorpay_key_id': settings.RAZORPAY_KEY_ID,
-            'amount': amount
-        }
+    try:
+        response = client.pay(pay_request)
+    except Exception as e:
+        return render(request, 'payment_failure.html', {'error': str(e)})
 
-        return render(request, 'payment_redirect.html', context)
+    # 🟢 Check for pending and valid redirect
+    if getattr(response, 'state', '').upper() == 'PENDING' and hasattr(response, 'redirect_url') and response.redirect_url:
+        return redirect(response.redirect_url)
 
+    # ❌ Otherwise, payment initiation failed
+    error_msg = getattr(response, 'state', 'UNKNOWN')
+    return render(request, 'payment_failure.html', {'error': error_msg})
 
 @csrf_exempt
-def razorpay_payment_success(request):
-    if request.method == "POST":
-        data = request.POST
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-
-        try:
-            client.utility.verify_payment_signature({
-                'razorpay_order_id': data['razorpay_order_id'],
-                'razorpay_payment_id': data['razorpay_payment_id'],
-                'razorpay_signature': data['razorpay_signature']
-            })
-
-            registration = TournamentRegistration.objects.get(razorpay_order_id=data['razorpay_order_id'])
-            category = registration.category
-            if category == 'singles':
-                amount = 49900
-            elif category == 'triplets':
-                amount = 99900
-            else :
-                amount = 79900
-
-            if registration:
-        # Save the payment details
-                Payment.objects.create(
-                    registration=registration,
-                    order_id=data['razorpay_order_id'],
-                    txn_id=data['razorpay_payment_id'],
-                    txn_amount=amount/100,
-                    status="TXN_SUCCESS",
-                    response_data=data,
-                )
-                # Update registration payment status
-                registration.payment_status = "Paid"
-                registration.save()
-                # Get player info from your model or request
-                player_name = registration.player_name 
-                partner_name = registration.partner_name 
-                player_email = registration.player_email
-                partner_email = registration.partner_email
-                partner_2_email = registration.partner_2_email
-                player_name = registration.player_name
-                partner_name = registration.partner_name
-                partner_2_name = registration.partner_2_name
-                category = registration.get_category_display()
-
-                    # Simulate Paytm POST data (normally comes from Paytm)
-                payment_params = {
-                    "ORDERID": data['razorpay_order_id'],
-                    "TXNID": data['razorpay_payment_id'],
-                    "TXNAMOUNT": amount/100,
-                    "STATUS": "TXN_SUCCESS"
-                }
-
-                send_transaction_email(player_email, partner_email, partner_2_email, player_name, partner_name, partner_2_name, category, payment_params)
-
-            # ✅ Payment is successful and verified
-            return render(request, 'payment_success.html')
-        except razorpay.errors.SignatureVerificationError:
-            return render(request,'payment_failure.html')
-        
+def phonepe_callback(request):
     
-    elif request.method == "GET":
-        data = request.GET
-        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    merchant_transaction_id = request.POST.get("merchantTransactionId") or request.GET.get("merchantTransactionId")
 
-        try:
-            # Safely extract data
-            razorpay_order_id = data.get('razorpay_order_id')
-            razorpay_payment_id = data.get('razorpay_payment_id')
-            razorpay_signature = data.get('razorpay_signature')
+    if not merchant_transaction_id:
+        return render(request, 'payment_failure.html', {'error': 'Missing merchantTransactionId'})
 
-            # Verify signature
-            client.utility.verify_payment_signature({
-                'razorpay_order_id': razorpay_order_id,
-                'razorpay_payment_id': razorpay_payment_id,
-                'razorpay_signature': razorpay_signature
-            })
+    # PhonePe client
+    client = StandardCheckoutClient.get_instance(
+        client_id=settings.PHONEPE_CLIENT_ID,
+        client_secret=settings.PHONEPE_CLIENT_SECRET,
+        client_version=1,
+        env=Env.SANDBOX if settings.PHONEPE_ENV == 'SANDBOX' else Env.PRODUCTION
+    )
 
-            registration = TournamentRegistration.objects.get(razorpay_order_id=razorpay_order_id)
-            category = registration.category
+    try:
+        status_resp = client.get_order_status(merchant_order_id=merchant_transaction_id)
+        print(status_resp)
+        if status_resp and status_resp.state in ['SUCCESS', 'COMPLETED']:
+            registration = TournamentRegistration.objects.get(phonepay_order_id=merchant_transaction_id)
+            amount_paid = get_amount_by_category(registration.category)
+            
+            # First try top-level amount
+            if status_resp.amount:
+                amount_paid = status_resp.amount
+            # Then try first payment detail's amount
+            elif status_resp.payment_details and status_resp.payment_details[0].amount:
+                amount_paid = status_resp.payment_details[0].amount
+            # Lastly, try first split instrument's amount
+            elif (
+                status_resp.payment_details and
+                status_resp.payment_details[0].split_instruments and
+                status_resp.payment_details[0].split_instruments[0].amount
+            ):
+                amount_paid = status_resp.payment_details[0].split_instruments[0].amount
 
-            # Determine amount
-            if category == 'singles':
-                amount = 49900
-            elif category == 'triplets':
-                amount = 99900
-            else:
-                amount = 79900 
+            # Convert to rupees if needed (amount is in paisa)
+            amount_paid_inr = amount_paid / 100
 
-            # Save payment info
+            txn_id = (
+                        status_resp.payment_details[0].transaction_id
+                        if status_resp.payment_details and status_resp.payment_details[0].transaction_id
+                        else None
+                    )
+            # Create payment entry
             Payment.objects.create(
                 registration=registration,
-                order_id=razorpay_order_id,
-                txn_id=razorpay_payment_id,
-                txn_amount=amount/100,
+                order_id=merchant_transaction_id,
+                txn_id=txn_id,
+                txn_amount=amount_paid_inr,
                 status="TXN_SUCCESS",
-                response_data=data,
+                response_data=status_resp.__dict__,
             )
 
-            # Update registration status
             registration.payment_status = "Paid"
             registration.save()
 
-            # Extract email & name details
-            player_name = registration.player_name
-            partner_name = registration.partner_name
-            partner_2_name = registration.partner_2_name
+            # Get player info from your model or request
+            player_name = registration.player_name 
+            partner_name = registration.partner_name 
             player_email = registration.player_email
             partner_email = registration.partner_email
             partner_2_email = registration.partner_2_email
-            category_display = registration.get_category_display()
+            player_name = registration.player_name
+            partner_2_name = registration.partner_2_name
+            category = registration.get_category_display()
 
+            # Simulate Paytm POST data (normally comes from Paytm)
             payment_params = {
-                "ORDERID": razorpay_order_id,
-                "TXNID": razorpay_payment_id,
-                "TXNAMOUNT": amount/100,
-                "STATUS": "TXN_SUCCESS"
+                "ORDERID": merchant_transaction_id,
+                "TXNID": txn_id,
+                "TXNAMOUNT": amount_paid_inr,
+                "STATUS": "SUCCESS"
             }
-
-            send_transaction_email(
-                player_email, partner_email, partner_2_email,
-                player_name, partner_name, partner_2_name,
-                category_display, payment_params
-            )
-
+            send_transaction_email(player_email, partner_email, partner_2_email, player_name, partner_name, partner_2_name, category, payment_params)
+            
             return render(request, 'payment_success.html')
 
-        except razorpay.errors.SignatureVerificationError as e:
-            return render(request, 'payment_failure.html')
+        return render(request, 'payment_failure.html')
 
-    else:
-        return render(request, 'payment_failed.html')
-    
-
-def payment_qr(request,registration_id):
-    registration = TournamentRegistration.objects.filter(id=registration_id).first()
-
-    category = registration.category
-    if category == 'singles':
-        amount = 499
-    elif category == 'triplets':
-        amount = 999
-    else :
-        amount = 799
-    
-
-    context = {
-        'registration': registration,
-        'category': category,
-        'amount': amount,
-    }
-
-    return render(request, 'payment_qr.html', context)
-
-def upload_screenshot(request, registration_id):
-    registration = get_object_or_404(TournamentRegistration, id=registration_id)
-
-    category = registration.category
-    if category == 'singles':
-        amount = 499
-    elif category == 'triplets':
-        amount = 999
-    else :
-        amount = 799
-
-    if request.method == 'POST' and request.FILES.get('screenshot'):
-
-        screenshot = request.FILES['screenshot']
-        registration.screenshot = screenshot  # Make sure your model has this field
-
-         # Save payment info
-        Payment.objects.create(
-            registration=registration,
-            order_id=registration.id,
-            txn_id=registration.id,
-            txn_amount=amount,
-            status="TXN_SUCCESS",
-            response_data=registration.screenshot.url,
-        )
-        
-        registration.payment_status = "Paid"
-        registration.save()
-
-        payment_params = {
-                "TXNAMOUNT": amount,
-                "STATUS": "Validating Payment Screenshot",
-                "screenshot" : screenshot
-            }
-
-         #Extract email & name details
-        player_name = registration.player_name
-        partner_name = registration.partner_name
-        partner_2_name = registration.partner_2_name
-        player_email = registration.player_email
-        partner_email = registration.partner_email
-        partner_2_email = registration.partner_2_email
-        category_display = registration.get_category_display()
-        send_transaction_email(
-                player_email, partner_email, partner_2_email,
-                player_name, partner_name, partner_2_name,
-                category_display, payment_params
-            )
-        return render(request,"payment_success.html")  # or wherever you want to redirect after upload
-    return render(request, 'upload_screenshot.html', {'registration': registration})
-
+    except Exception as e:
+        return render(request, 'payment_failure.html', {'error': str(e)})

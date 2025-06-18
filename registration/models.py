@@ -26,7 +26,7 @@ class TournamentRegistration(models.Model):
     partner_2_email = models.EmailField(blank=True, null=True)  # New field
 
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    razorpay_order_id = models.CharField(max_length=100, blank=True, null=True)
+    phonepay_order_id = models.CharField(max_length=100, blank=True, null=True)
     payment_status = models.CharField(max_length=20, default='Pending')  # Payment status
 
     screenshot = models.ImageField(upload_to='screenshots/', null=True, blank=True)
