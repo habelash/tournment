@@ -124,6 +124,7 @@
               <th>Partner 2 Name</th>
               <th>Category</th>
               <th>Payment Status</th>
+              <th>Referred By</th>
             </tr>
           </thead>
           <tbody>
@@ -143,6 +144,7 @@
                     <span class="badge bg-danger">Failed</span>
                   {% endif %}
                 </td>
+                <td>{{ payment.registration.referred_by }}</td>
               </tr>
             {% empty %}
               <tr>

@@ -30,6 +30,7 @@ class TournamentRegistration(models.Model):
     payment_status = models.CharField(max_length=20, default='Pending')  # Payment status
 
     screenshot = models.ImageField(upload_to='screenshots/', null=True, blank=True)
+    referred_by = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f"{self.player_name} - {self.category}"
