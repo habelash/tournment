@@ -11,6 +11,7 @@ from phonepe.sdk.pg.payments.v2.standard_checkout_client import StandardCheckout
 from phonepe.sdk.pg.payments.v2.models.request.standard_checkout_pay_request import StandardCheckoutPayRequest
 from django.urls import reverse
 from django.utils.http import urlencode
+from players.utils import reshuffle_leagues
 
 
 def send_transaction_email(player_email, partner_email, partner_2_email, player_name, partner_name, partner_2_name, category, paytm_params):
@@ -161,7 +162,7 @@ def phonepe_callback(request):
                 "STATUS": "SUCCESS"
             }
             send_transaction_email(player_email, partner_email, partner_2_email, player_name, partner_name, partner_2_name, category, payment_params)
-            
+            reshuffle_leagues()
             return render(request, 'payment_success.html')
 
         return render(request, 'payment_failure.html')
